@@ -141,6 +141,7 @@ in lib.mkMerge [
         bind = keysym: command: { inherit keysym command; };
 
         constant_keybinds = [
+          (bind "button2" ''nop'')
           (bind "--release button2" ''kill'')
           (bind "button4" ''nop'')
           (bind "button5" ''nop'')
