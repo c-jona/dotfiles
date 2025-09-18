@@ -102,6 +102,7 @@
           "browser.uiCustomization.horizontalTabstrip" = ''["tabbrowser-tabs","new-tab-button"]'';
           "browser.uiCustomization.state" = ''{"placements":{"widget-overflow-fixed-list":[],"unified-extensions-area":["ublock0_raymondhill_net-browser-action"],"nav-bar":["sidebar-button","back-button","forward-button","stop-reload-button","urlbar-container","vertical-spacer","zoom-controls","downloads-button","unified-extensions-button"],"toolbar-menubar":["menubar-items"],"TabsToolbar":[],"vertical-tabs":["tabbrowser-tabs"],"PersonalToolbar":["import-button","personal-bookmarks"]},"seen":["developer-button","ublock0_raymondhill_net-browser-action"],"dirtyAreaCache":["nav-bar","TabsToolbar","vertical-tabs","PersonalToolbar","toolbar-menubar","unified-extensions-area"],"currentVersion":22,"newElementCount":3}'';
         } // builtins.mapAttrs (_: locked) {
+          "accessibility.typeaheadfind.enablesound" = false;
           "browser.aboutConfig.showWarning" = false;
           "browser.eme.ui.enabled" = true;
           "browser.preferences.moreFromMozilla" = false;
