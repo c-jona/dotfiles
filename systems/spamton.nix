@@ -17,16 +17,20 @@
     brightness-controls.enable = true;
     cpu.intel.updateMicrocode = true;
     enableRedistributableFirmware = true;
+    graphics.enable = true;
     laptop.enable = true;
     xpadneo.enable = true;
   };
 
-  services.xserver.xrandrHeads = [
-    {
-      output = "eDP-1";
-      primary = true;
-    }
-  ];
+  services.xserver = {
+    videoDrivers = [ "modesetting" ];
+    xrandrHeads = [
+      {
+        output = "eDP-1";
+        primary = true;
+      }
+    ];
+  };
 
   nixpkgs.hostPlatform = "x86_64-linux";
   system.stateVersion = "25.05";

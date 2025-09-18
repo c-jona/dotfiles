@@ -87,6 +87,7 @@ let
       pactl --format=json list sinks | jq -c ".[] | select(.index==$default_sink_index) | {\"sink\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume.\"front-left\".value_percent | rtrimstr(\"%\") | tonumber}"
     }
 
+    sleep 1
     default_sink_index=""
     while [[ -z "$default_sink_index" ]]; do
       set_default_sink
