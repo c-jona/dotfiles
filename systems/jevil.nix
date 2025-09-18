@@ -16,6 +16,12 @@
     kernelModules = [ "kvm-intel" ];
   };
 
+  fileSystems."/mnt/HDD1" = {
+    device = "/dev/disk/by-uuid/3d3c68d2-684b-416d-bd35-91e1b6aab407";
+    fsType = "ext4";
+    options = [ "nofail" "x-gvfs-show" ];
+  };
+
   hardware = {
     cpu.intel.updateMicrocode = true;
     enableRedistributableFirmware = true;
