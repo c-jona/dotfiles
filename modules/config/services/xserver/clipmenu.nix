@@ -9,6 +9,7 @@ in {
       variables = {
         CM_HISTLENGTH = 10;
         CM_LAUNCHER = "rofi";
+        CM_SELECTIONS = "clipboard";
       };
     };
 
