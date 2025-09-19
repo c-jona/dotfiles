@@ -27,22 +27,22 @@ let
     @define-color view_bg_color #161821;
     @define-color view_fg_color #c6c8d1;
 
-    @define-color headerbar_bg_color #0f1117;
+    @define-color headerbar_bg_color #161821;
     @define-color headerbar_fg_color #c6c8d1;
-    @define-color headerbar_backdrop_color #0f1117;
+    @define-color headerbar_backdrop_color #161821;
     @define-color headerbar_border_color rgba(0, 0, 0, 0.36);
     @define-color headerbar_shade_color rgba(0, 0, 0, 0.25);
     @define-color headerbar_darker_shade_color rgba(0, 0, 0, 0.50);
 
-    @define-color sidebar_bg_color #0f1117;
+    @define-color sidebar_bg_color #161821;
     @define-color sidebar_fg_color #c6c8d1;
-    @define-color sidebar_backdrop_color #0f1117;
+    @define-color sidebar_backdrop_color #161821;
     @define-color sidebar_border_color rgba(0, 0, 0, 0.36);
     @define-color sidebar_shade_color rgba(0, 0, 0, 0.25);
 
-    @define-color secondary_sidebar_bg_color #0f1117;
+    @define-color secondary_sidebar_bg_color #161821;
     @define-color secondary_sidebar_fg_color #c6c8d1;
-    @define-color secondary_sidebar_backdrop_color #0f1117;
+    @define-color secondary_sidebar_backdrop_color #161821;
     @define-color secondary_sidebar_border_color rgba(0, 0, 0, 0.36);
     @define-color secondary_sidebar_shade_color rgba(0, 0, 0, 0.25);
 
