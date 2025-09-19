@@ -75,15 +75,16 @@ let
 in lib.mkMerge [
   {
     services.xserver.windowManager.i3.extraPackages = lib.mkMerge [
-      [ pkgs.i3lock-color ]
+      (with pkgs; [ alttab i3lock-color ])
       (lib.mkIf config.hardware.bluetooth.enable [ pkgs.bzmenu ])
     ];
   }
   (lib.mkIf cfg.enable {
     home-files.allUsers.".config/i3/config" = ''
-      exec --no-startup-id "i3-msg --quiet 'workspace 1'"
+      exec --no-startup-id "alttab -w 1 -d 0 -dk Delete -t 120x120 -i 120x48 -s 0 -bg '#0f1117' -fg '#c6c8d1' -frame '#242940' -inact '#1e2132' -font 'xft:MartianMono Nerd Font-10' -b 0 >/dev/null 2>&1"
       exec --no-startup-id "eww daemon >/dev/null 2>&1"
       exec --no-startup-id ${manage_outputs}
+      exec --no-startup-id "i3-msg --quiet 'workspace 1'"
 
       client.background        #0f111700
       client.focused           #161821 #161821 #c6c8d1 #1e2132 #161821
