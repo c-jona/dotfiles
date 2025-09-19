@@ -144,6 +144,7 @@ in {
 
         window.powermenu, window.powermenu_confirm {
           background-color: #0f1117;
+          border-radius: 0px 15px 0px 0px;
         }
 
         box.powermenu, box.powermenu_confirm {
@@ -182,6 +183,7 @@ in {
 
         window.calendar {
           background-color: #0f1117;
+          border-radius: 15px 0px 0px 0px;
         }
 
         box.calendar {

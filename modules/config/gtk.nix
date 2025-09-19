@@ -115,10 +115,6 @@ let
 
       --window-radius: 0;
     }
-
-    window {
-      border-radius: 0;
-    }
   '';
 
   settings = lib.generators.toINI {} {
