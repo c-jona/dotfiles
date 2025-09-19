@@ -277,7 +277,7 @@ in lib.mkMerge [
 
             (bind "Mod4+n" ''exec --no-startup-id networkmanager_dmenu'')
 
-            (bind "Mod4+space" ''exec --no-startup-id "rofi -show window"'')
+            (bind "Mod4+space" ''exec --no-startup-id "rofi -show-icons -show window"'')
 
             (bind "Mod4+Left" ''focus left'')
             (bind "Mod4+Shift+Left" ''move left 40 px'')

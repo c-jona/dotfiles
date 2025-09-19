@@ -51,10 +51,11 @@ in lib.mkMerge [
       screenshot-select
       slop
       wmctrl
+      xclip
       xcolor
+      xdotool
       xorg.xev
       xorg.xkill
-      xclip
       xsel
     ];
 

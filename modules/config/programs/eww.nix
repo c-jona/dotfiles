@@ -503,14 +503,14 @@ in {
           (box :visible {network.ethernet.state != ""}
                :class "ethernet"
             (icon :icon {network.ethernet.state == "Connected" ? "󰈁" : "󰈂"}
-                  :onclick "close-active-menus; networkmanager_dmenu &"
+                  :onclick "close-active-menus; networkmanager_dmenu -m -5 &"
                   :tooltip "Ethernet: ''${network.ethernet.state == "Connected" ? "Connected to ''${network.ethernet.connection}" : network.ethernet.state}")))
 
         (defwidget wifi []
           (box :visible {network.wifi.state != ""}
                :class "wifi"
             (icon :icon {network.wifi.state == "Connected" ? "󰖩" : "󰖪"}
-                  :onclick "close-active-menus; networkmanager_dmenu &"
+                  :onclick "close-active-menus; networkmanager_dmenu -m -5 &"
                   :tooltip "Wifi: ''${network.wifi.state == "Connected" ? "Connected to ''${network.wifi.connection}" : network.wifi.state}")))
 
         ${if config.hardware.bluetooth.enable then ''
@@ -521,7 +521,7 @@ in {
         (defwidget bluetooth []
           (box :class "bluetooth"
             (icon :icon {bluetooth.power_state == "On" ? "󰂯" : "󰂲"}
-                  :onclick "close-active-menus; bzmenu --icon font --launcher custom --launcher-command 'rofi -dmenu -p bluetooth' &"
+                  :onclick "close-active-menus; bzmenu --icon font --launcher custom --launcher-command 'rofi -dmenu -m -5 -p bluetooth' &"
                   :tooltip "Bluetooth: ''${bluetooth.power_state}")))
         '' else ""}
 
@@ -596,8 +596,8 @@ in {
                :spacing 6
                :class "workspaces"
             (icon :icon "󰄶"
-                  :onclick "close-active-menus; rofi -show window &"
-                  :onrightclick "close-active-menus; rofi -show-icons -show drun &")
+                  :onclick "close-active-menus; rofi -m -5 -show-icons -show window &"
+                  :onrightclick "close-active-menus; rofi -m -5 -show-icons -show drun &")
             (for workspace in {jq(workspaces, 'map(select(.output=="''${monitor}"))')}
               (button :active true
                       :timeout "1s"
