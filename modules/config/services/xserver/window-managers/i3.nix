@@ -81,7 +81,7 @@ in lib.mkMerge [
   }
   (lib.mkIf cfg.enable {
     home-files.allUsers.".config/i3/config" = ''
-      exec --no-startup-id "alttab -w 1 -d 0 -dk Delete -t 96x104 -i 96x48 -s 0 -bg '#0f1117' -fg '#c6c8d1' -frame '#242940' -inact '#1e2132' -font 'xft:MartianMono Nerd Font-10' -b 0 >/dev/null 2>&1"
+      exec --no-startup-id "alttab -w 1 -d 0 -dk Delete -t 104x104 -i 104x48 -s 0 -bg '#0f1117' -fg '#c6c8d1' -frame '#242940' -inact '#1e2132' -font 'xft:MartianMono Nerd Font-10' -b 0 >/dev/null 2>&1"
       exec --no-startup-id "eww daemon >/dev/null 2>&1"
       exec --no-startup-id ${manage_outputs}
       exec --no-startup-id "i3-msg --quiet 'workspace 1'"
