@@ -52,6 +52,7 @@
     systemPackages = with pkgs; [
       adwaita-icon-theme
       adwaita-icon-theme-legacy
+      bc
       clang
       clang-tools
       discord
