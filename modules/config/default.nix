@@ -107,13 +107,15 @@
     fontconfig.defaultFonts = {
       emoji = [ "Noto Color Emoji" ];
       monospace = [ "MartianMono Nerd Font" ];
-      sansSerif = [ "Noto Sans" ];
-      serif = [ "Noto Serif" ];
+      sansSerif = [ "Roboto" ];
+      serif = [ "Roboto Slab" ];
     };
     packages = with pkgs; [
       nerd-fonts.martian-mono
       noto-fonts
       noto-fonts-color-emoji
+      roboto
+      roboto-slab
     ];
   };
 
