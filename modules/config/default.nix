@@ -79,6 +79,7 @@
       ]))
       ripgrep
       spotify
+      stack
       tree
       typescript-language-server
       vscode-langservers-extracted
