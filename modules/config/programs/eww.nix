@@ -90,13 +90,41 @@ let
     done
   '';
 
+  listen_microphone = pkgs.writeShellScript "eww_listen_microphone" ''
+    set_default_source() {
+      default_source="$(pactl get-default-source)"
+      default_source_index=$(pactl --format=json list sources short | jq ".[] | select(.name==\"$default_source\").index")
+    }
+
+    get_status() {
+      pactl --format=json list sources | jq -c ".[] | select(.index==$default_source_index) | {\"source\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume.\"front-left\".value_percent | rtrimstr(\"%\") | tonumber}"
+    }
+
+    sleep 1
+    default_source_index=""
+    while [[ -z "$default_source_index" ]]; do
+      set_default_source
+      sleep 0.05
+    done
+
+    get_status
+    pactl --format=json subscribe | while read -r EVENT; do
+      if $(jq ".event==\"change\" and (.on==\"server\" or (.on==\"source\" and .index==$default_source_index))" <<< "$EVENT"); then
+        if $(jq '.on=="server"' <<< "$EVENT"); then
+          set_default_source
+        fi
+        get_status
+      fi
+    done
+  '';
+
   listen_volume = pkgs.writeShellScript "eww_listen_volume" ''
     set_default_sink() {
       default_sink="$(pactl get-default-sink)"
       default_sink_index=$(pactl --format=json list sinks short | jq ".[] | select(.name==\"$default_sink\").index")
     }
 
-    get_volume() {
+    get_status() {
       pactl --format=json list sinks | jq -c ".[] | select(.index==$default_sink_index) | {\"sink\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume.\"front-left\".value_percent | rtrimstr(\"%\") | tonumber}"
     }
 
@@ -107,13 +135,13 @@ let
       sleep 0.05
     done
 
-    get_volume
+    get_status
     pactl --format=json subscribe | while read -r EVENT; do
       if $(jq ".event==\"change\" and (.on==\"server\" or (.on==\"sink\" and .index==$default_sink_index))" <<< "$EVENT"); then
         if $(jq '.on=="server"' <<< "$EVENT"); then
           set_default_sink
         fi
-        get_volume
+        get_status
       fi
     done
   '';
@@ -387,6 +415,9 @@ in {
         (deflisten workspaces :initial "[]"
           "${listen_workspaces}")
 
+        (deflisten microphone :initial '{"source":"auto_null"}'
+          "${listen_microphone}")
+
         (deflisten volume :initial '{"sink":"auto_null"}'
           "${listen_volume}")
 
@@ -448,27 +479,27 @@ in {
 
         (defwidget _battery [battery]
           (icon_text :icon {battery.status == "Charging" ? (battery.capacity == 100 ? "󰂅" :
-                                                                    battery.capacity >= 90 ? "󰂋" :
-                                                                    battery.capacity >= 80 ? "󰂊" :
-                                                                    battery.capacity >= 70 ? "󰢞" :
-                                                                    battery.capacity >= 60 ? "󰂉" :
-                                                                    battery.capacity >= 50 ? "󰢝" :
-                                                                    battery.capacity >= 40 ? "󰂈" :
-                                                                    battery.capacity >= 30 ? "󰂇" :
-                                                                    battery.capacity >= 20 ? "󰂆" :
-                                                                    battery.capacity >= 10 ? "󰢜" :
-                                                                    "󰢟") :
-                                    battery.capacity == 100 ? "󰁹" :
-                                    battery.capacity >= 90 ? "󰂂" :
-                                    battery.capacity >= 80 ? "󰂁" :
-                                    battery.capacity >= 70 ? "󰂀" :
-                                    battery.capacity >= 60 ? "󰁿" :
-                                    battery.capacity >= 50 ? "󰁾" :
-                                    battery.capacity >= 40 ? "󰁽" :
-                                    battery.capacity >= 30 ? "󰁼" :
-                                    battery.capacity >= 20 ? "󰁻" :
-                                    battery.capacity >= 10 ? "󰁺" :
-                                    "󰂎"}
+                                                            battery.capacity >= 90 ? "󰂋" :
+                                                            battery.capacity >= 80 ? "󰂊" :
+                                                            battery.capacity >= 70 ? "󰢞" :
+                                                            battery.capacity >= 60 ? "󰂉" :
+                                                            battery.capacity >= 50 ? "󰢝" :
+                                                            battery.capacity >= 40 ? "󰂈" :
+                                                            battery.capacity >= 30 ? "󰂇" :
+                                                            battery.capacity >= 20 ? "󰂆" :
+                                                            battery.capacity >= 10 ? "󰢜" :
+                                                            "󰢟") :
+                            battery.capacity == 100 ? "󰁹" :
+                            battery.capacity >= 90 ? "󰂂" :
+                            battery.capacity >= 80 ? "󰂁" :
+                            battery.capacity >= 70 ? "󰂀" :
+                            battery.capacity >= 60 ? "󰁿" :
+                            battery.capacity >= 50 ? "󰁾" :
+                            battery.capacity >= 40 ? "󰁽" :
+                            battery.capacity >= 30 ? "󰁼" :
+                            battery.capacity >= 20 ? "󰁻" :
+                            battery.capacity >= 10 ? "󰁺" :
+                            "󰂎"}
                        :text "''${battery.capacity}%"
                        :tooltip "Battery: ''${battery.status}"))
 
@@ -532,17 +563,27 @@ in {
                 (label :text {workspace.name}
                        :class "text")))))
 
+        (defwidget microphone []
+          (box :class "microphone"
+            (icon_scale :icon {microphone.source == "auto_null" ? "󰍭" :
+                               microphone.muted ? "󰍮" :
+                               "󰍬"}
+                          :value {microphone.source == "auto_null" ? 0 : microphone.level}
+                          :onclick {microphone.source == "auto_null" ? "" : "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"}
+                          :onchange {microphone.source == "auto_null" ? "" : "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ {}%"}
+                          :tooltip "Microphone: ''${microphone.source == "auto_null" ? "No input" : "''${microphone.level}%''${microphone.muted ? " (muted)" : ""}"}")))
+
         (defwidget volume []
           (box :class "volume"
             (icon_scale :icon {volume.sink == "auto_null" ? "󰸈" :
-                                       volume.muted ? "󰝟" :
-                                       volume.level >= 70 ? "󰕾" :
-                                       volume.level >= 35 ? "󰖀" :
-                                       "󰕿"}
+                               volume.muted ? "󰝟" :
+                               volume.level >= 70 ? "󰕾" :
+                               volume.level >= 35 ? "󰖀" :
+                               "󰕿"}
                           :value {volume.sink == "auto_null" ? 0 : volume.level}
                           :onclick {volume.sink == "auto_null" ? "" : "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"}
                           :onchange {volume.sink == "auto_null" ? "" : "wpctl set-volume @DEFAULT_AUDIO_SINK@ {}%"}
-                          :tooltip "Volume: ''${volume.sink == "auto_null" ? "No output" : "''${volume.level}%''${volume.muted ? " (Muted)" : ""}"}")))
+                          :tooltip "Volume: ''${volume.sink == "auto_null" ? "No output" : "''${volume.level}%''${volume.muted ? " (muted)" : ""}"}")))
 
         ${if config.hardware.brightness-controls.enable then ''
         (defwidget brightness []
@@ -651,7 +692,8 @@ in {
                  :class "left"
               (power :powermenu_monitor monitor)
               ${if config.hardware.brightness-controls.enable then "(brightness)" else ""}
-              (volume))
+              (volume)
+              (microphone))
             (box :space-evenly false
                  :spacing 24
                  :halign "center"
