@@ -151,16 +151,14 @@ in lib.mkMerge [
           (bind "XF86AudioLowerVolume" ''exec --no-startup-id "wpctl set-volume --limit 1.0 @DEFAULT_AUDIO_SINK@ 5%-"'')
           (bind "XF86AudioRaiseVolume" ''exec --no-startup-id "wpctl set-volume --limit 1.0 @DEFAULT_AUDIO_SINK@ 5%+"'')
 
-          (bind "Print" ''exec --no-startup-id "screenshot-select"'')
-          (bind "Shift+Print" ''exec --no-startup-id "screenshot \\"$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused).output')\\""'')
-
           (bind "Mod4+grave" ''exec --no-startup-id "monitor=\\"$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused).output')\\"; toggle-menu powermenu \\"powermenu_$monitor\\" --arg monitor=\\"$monitor\\" --arg bar_hidden=$(eww get bar_hidden)"'')
-
-          (bind "Mod4+Shift+c" ''exec --no-startup-id "xcolor --selection"'')
         ];
 
         keybinds = rec {
           "default" = [
+            (bind "Print" ''exec --no-startup-id "screenshot-select"'')
+            (bind "Shift+Print" ''exec --no-startup-id "screenshot \\"$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused).output')\\""'')
+
             (bind "Mod4+Shift+asciitilde" ''exec --no-startup-id "i3lock-color"'')
 
             (bind "Mod4+1" ''workspace 1'')
@@ -275,6 +273,7 @@ in lib.mkMerge [
             (bind "Mod4+Return" ''exec --no-startup-id "$TERMINAL"'')
 
             (bind "Mod4+c" ''exec --no-startup-id "clipmenu -p clipboard"'')
+            (bind "Mod4+Shift+c" ''exec --no-startup-id "xcolor --selection"'')
 
             (bind "Mod4+n" ''exec --no-startup-id networkmanager_dmenu'')
 
