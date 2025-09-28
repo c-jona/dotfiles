@@ -97,7 +97,7 @@ let
     }
 
     get_status() {
-      pactl --format=json list sources | jq -c ".[] | select(.index==$default_source_index) | {\"source\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume.\"front-left\".value_percent | rtrimstr(\"%\") | tonumber}"
+      pactl --format=json list sources | jq -c ".[] | select(.index==$default_source_index) | {\"source\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume[].value_percent | rtrimstr(\"%\") | tonumber}"
     }
 
     sleep 1
@@ -125,7 +125,7 @@ let
     }
 
     get_status() {
-      pactl --format=json list sinks | jq -c ".[] | select(.index==$default_sink_index) | {\"sink\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume.\"front-left\".value_percent | rtrimstr(\"%\") | tonumber}"
+      pactl --format=json list sinks | jq -c ".[] | select(.index==$default_sink_index) | {\"sink\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume[].value_percent | rtrimstr(\"%\") | tonumber}"
     }
 
     sleep 1
