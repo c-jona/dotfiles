@@ -55,6 +55,12 @@ let
     ${close_menu_closers}
   '';
 
+  poll_notifications = pkgs.writeShellScript "eww_poll_notifications" ''
+    paused="$(dunstctl is-paused)"
+    remaining="$(dunstctl count waiting)"
+    echo "{\"paused\": ''${paused},\"remaining\": ''${remaining}}"
+  '';
+
   poll_network = pkgs.writeShellScript "eww_poll_network" ''
     nmcli --terse device status | {
       while IFS=':' read -r DEVICE TYPE STATE CONNECTION; do
@@ -75,6 +81,13 @@ let
     default_controller="$(bluetoothctl list | grep '\[default\]' | awk '{print $2}')"
     power_state="$(bluetoothctl show "$default_controller" | grep 'PowerState:' | awk '{print $2}')"
     echo "{\"power_state\": \"''${power_state^}\"}"
+  '';
+
+  listen_workspaces = pkgs.writeShellScript "eww_listen_workspaces" ''
+    i3-msg -t get_workspaces
+    i3-msg -t subscribe -m '["output", "workspace"]' | while read _; do
+      i3-msg -t get_workspaces
+    done
   '';
 
   listen_volume = pkgs.writeShellScript "eww_listen_volume" ''
@@ -112,13 +125,6 @@ let
     done
   '';
 
-  listen_workspaces = pkgs.writeShellScript "eww_listen_workspaces" ''
-    i3-msg -t get_workspaces
-    i3-msg -t subscribe -m '["output", "workspace"]' | while read _; do
-      i3-msg -t get_workspaces
-    done
-  '';
-
   cfg = config.programs.eww;
 in {
   options.programs.eww.enable = lib.mkEnableOption "eww";
@@ -140,6 +146,34 @@ in {
           font-family: "monospace";
           font-size: 16px;
           font-weight: 500;
+        }
+
+        window.calendar {
+          background-color: #0f1117;
+          border-radius: 15px 0px 0px 0px;
+        }
+
+        box.calendar {
+          padding: 12px 12px 0px 12px;
+
+          calendar {
+            padding: 0px 3px 3px 3px;
+
+            &:indeterminate {
+              color: #6b7089;
+            }
+
+            &:selected {
+              background-color: #2a3158;
+              border-radius: 8px;
+              color: #d2d4de;
+            }
+
+            &.button:hover {
+              background-color: #1e2132;
+              border-radius: 4px;
+            }
+          }
         }
 
         window.powermenu, window.powermenu_confirm {
@@ -177,34 +211,6 @@ in {
 
             &:hover {
               background-color: #1e2132;
-            }
-          }
-        }
-
-        window.calendar {
-          background-color: #0f1117;
-          border-radius: 15px 0px 0px 0px;
-        }
-
-        box.calendar {
-          padding: 12px 12px 0px 12px;
-
-          calendar {
-            padding: 0px 3px 3px 3px;
-
-            &:indeterminate {
-              color: #6b7089;
-            }
-
-            &:selected {
-              background-color: #2a3158;
-              border-radius: 8px;
-              color: #d2d4de;
-            }
-
-            &.button:hover {
-              background-color: #1e2132;
-              border-radius: 4px;
             }
           }
         }
@@ -356,6 +362,39 @@ in {
         }
       '';
       "eww.yuck" = ''
+        (defvar active_menus "")
+
+        (defvar bar_hidden false)
+
+        (defpoll time :initial '{"year": "1970","month": "01","month_abbr": "Jan","month_full": "January","day": "01","day_of_year": "001","day_of_week": "4","day_of_week_abbr": "Thu", "day_of_week_full": "Thursday","hour": "01","minute": "00","second": "00"}'
+                      :interval "1s"
+          "date +'{\"year\": \"%Y\",\"month\": \"%m\",\"month_abbr\": \"%b\",\"month_full\": \"%B\",\"day\": \"%d\",\"day_of_year\": \"%j\",\"day_of_week\": \"%u\",\"day_of_week_abbr\": \"%a\", \"day_of_week_full\": \"%A\",\"hour\": \"%H\",\"minute\": \"%M\",\"second\": \"%S\"}'")
+
+        (defpoll notifications :initial '{"paused": false,"remaining": 0}'
+                               :interval "1s"
+          "${poll_notifications}")
+
+        (defpoll network :initial '{"ethernet": {"state": "","connection": ""},"wifi": {"state": "","connection": ""}}'
+                         :interval "1s"
+          "${poll_network}")
+
+        ${if config.hardware.bluetooth.enable then ''
+        (defpoll bluetooth :initial '{"power_state": "Off"}'
+                           :interval "1s"
+          "${poll_bluetooth}")
+        '' else ""}
+
+        (deflisten workspaces :initial "[]"
+          "${listen_workspaces}")
+
+        (deflisten volume :initial '{"sink":"auto_null"}'
+          "${listen_volume}")
+
+        ${if config.hardware.brightness-controls.enable then ''
+        (deflisten brightness :initial 0
+          "${listen_brightness}")
+        '' else ""}
+
         (defwidget icon [icon ?active ?onclick ?onmiddleclick ?onrightclick ?tooltip]
           (button :active {active ?: true}
                   :timeout "1s"
@@ -398,9 +437,126 @@ in {
                    :onchange onchange
                    :value value)))
 
-        (defvar active_menus "")
+        (defwidget time [calendar_monitor]
+          (button :active true
+                  :timeout "1s"
+                  :onclick "toggle-menu calendar \"calendar_''${calendar_monitor}\" --arg monitor=\"''${calendar_monitor}\" --arg bar_hidden=$(eww get bar_hidden)"
+                  :tooltip "''${time.day_of_week_full}, ''${time.day} ''${time.month_full} ''${time.year}"
+                  :class "time"
+            (label :text "''${time.hour}:''${time.minute}"
+                   :class "text")))
 
-        (defvar bar_hidden false)
+        (defwidget _battery [battery]
+          (icon_text :icon {battery.status == "Charging" ? (battery.capacity == 100 ? "󰂅" :
+                                                                    battery.capacity >= 90 ? "󰂋" :
+                                                                    battery.capacity >= 80 ? "󰂊" :
+                                                                    battery.capacity >= 70 ? "󰢞" :
+                                                                    battery.capacity >= 60 ? "󰂉" :
+                                                                    battery.capacity >= 50 ? "󰢝" :
+                                                                    battery.capacity >= 40 ? "󰂈" :
+                                                                    battery.capacity >= 30 ? "󰂇" :
+                                                                    battery.capacity >= 20 ? "󰂆" :
+                                                                    battery.capacity >= 10 ? "󰢜" :
+                                                                    "󰢟") :
+                                    battery.capacity == 100 ? "󰁹" :
+                                    battery.capacity >= 90 ? "󰂂" :
+                                    battery.capacity >= 80 ? "󰂁" :
+                                    battery.capacity >= 70 ? "󰂀" :
+                                    battery.capacity >= 60 ? "󰁿" :
+                                    battery.capacity >= 50 ? "󰁾" :
+                                    battery.capacity >= 40 ? "󰁽" :
+                                    battery.capacity >= 30 ? "󰁼" :
+                                    battery.capacity >= 20 ? "󰁻" :
+                                    battery.capacity >= 10 ? "󰁺" :
+                                    "󰂎"}
+                       :text "''${battery.capacity}%"
+                       :tooltip "Battery: ''${battery.status}"))
+
+        (defwidget battery []
+          (box :class "battery"
+            (_battery :battery {jq(EWW_BATTERY, 'to_entries | map(select(.key | match("^BAT"))) | first.value')})))
+
+        (defwidget memory []
+          (box :class "memory"
+            (icon_text :icon "󰍛"
+                         :text "''${round(EWW_RAM.used_mem_perc, 1)}%"
+                         :tooltip "Memory: Using ''${formatbytes(round(EWW_RAM.used_mem, 0), true)}/''${formatbytes(round(EWW_RAM.total_mem, 0), true)}")))
+
+        (defwidget notifications []
+          (box :class "notifications"
+            (icon :icon {notifications.paused ? "󰂛" : "󰂚"}
+                  :onclick "dunstctl set-paused toggle; eww poll notifications"
+                  :tooltip "Notifications: ''${notifications.remaining} remaining''${notifications.paused ? " (paused)" : ""}")))
+
+        (defwidget ethernet []
+          (box :visible {network.ethernet.state != ""}
+               :class "ethernet"
+            (icon :icon {network.ethernet.state == "Connected" ? "󰈁" : "󰈂"}
+                  :onclick "close-active-menus; networkmanager_dmenu -m -5 &"
+                  :tooltip "Ethernet: ''${network.ethernet.state == "Connected" ? "Connected to ''${network.ethernet.connection}" : network.ethernet.state}")))
+
+        (defwidget wifi []
+          (box :visible {network.wifi.state != ""}
+               :class "wifi"
+            (icon :icon {network.wifi.state == "Connected" ? "󰖩" : "󰖪"}
+                  :onclick "close-active-menus; networkmanager_dmenu -m -5 &"
+                  :tooltip "Wifi: ''${network.wifi.state == "Connected" ? "Connected to ''${network.wifi.connection}" : network.wifi.state}")))
+
+        ${if config.hardware.bluetooth.enable then ''
+        (defwidget bluetooth []
+          (box :class "bluetooth"
+            (icon :icon {bluetooth.power_state == "On" ? "󰂯" : "󰂲"}
+                  :onclick "close-active-menus; bzmenu --icon font --launcher custom --launcher-command 'rofi -dmenu -m -5 -p bluetooth' &"
+                  :tooltip "Bluetooth: ''${bluetooth.power_state}")))
+        '' else ""}
+
+        (defwidget tray []
+          (box :class "tray"
+            (systray :icon-size 20
+                     :prepend-new true
+                     :space-evenly false
+                     :spacing 12)))
+
+        (defwidget workspaces [monitor]
+          (box :space-evenly false
+               :spacing 6
+               :class "workspaces"
+            (icon :icon "󰄶"
+                  :onclick "close-active-menus; rofi -m -5 -show-icons -show window &"
+                  :onrightclick "close-active-menus; rofi -m -5 -show-icons -show drun &")
+            (for workspace in {jq(workspaces, 'map(select(.output=="''${monitor}"))')}
+              (button :active true
+                      :timeout "1s"
+                      :onclick 'i3-msg --quiet \'workspace --no-auto-back-and-forth "''${workspace.name}"\'''
+                      :class "workspace''${workspace.focused ? " focused" : ""}''${workspace.urgent ? " urgent" : ""}''${workspace.visible ? " visible" : ""}"
+                (label :text {workspace.name}
+                       :class "text")))))
+
+        (defwidget volume []
+          (box :class "volume"
+            (icon_scale :icon {volume.sink == "auto_null" ? "󰸈" :
+                                       volume.muted ? "󰝟" :
+                                       volume.level >= 70 ? "󰕾" :
+                                       volume.level >= 35 ? "󰖀" :
+                                       "󰕿"}
+                          :value {volume.sink == "auto_null" ? 0 : volume.level}
+                          :onclick {volume.sink == "auto_null" ? "" : "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"}
+                          :onchange {volume.sink == "auto_null" ? "" : "wpctl set-volume @DEFAULT_AUDIO_SINK@ {}%"}
+                          :tooltip "Volume: ''${volume.sink == "auto_null" ? "No output" : "''${volume.level}%''${volume.muted ? " (Muted)" : ""}"}")))
+
+        ${if config.hardware.brightness-controls.enable then ''
+        (defwidget brightness []
+          (box :class "brightness"
+            (icon_scale :icon "󰃟"
+                          :value brightness
+                          :onchange "set-brightness {}"
+                          :tooltip "Brightness: ''${brightness}%")))
+        '' else ""}
+
+        (defwidget power [powermenu_monitor]
+          (box :class "power"
+            (icon :icon "󰐥"
+                  :onclick "toggle-menu powermenu \"powermenu_''${powermenu_monitor}\" --arg monitor=\"''${powermenu_monitor}\" --arg bar_hidden=$(eww get bar_hidden)")))
 
         (defwindow menu_closer [monitor ?bar_hidden]
                    :geometry (geometry :anchor "bottom center"
@@ -415,10 +571,6 @@ in {
                     :timeout "1s"
                     :onclick "close-active-menus"))
 
-        (defpoll time :initial '{"year": "1970","month": "01","month_abbr": "Jan","month_full": "January","day": "01","day_of_year": "001","day_of_week": "4","day_of_week_abbr": "Thu", "day_of_week_full": "Thursday","hour": "01","minute": "00","second": "00"}'
-                      :interval "1s"
-          "date +'{\"year\": \"%Y\",\"month\": \"%m\",\"month_abbr\": \"%b\",\"month_full\": \"%B\",\"day\": \"%d\",\"day_of_year\": \"%j\",\"day_of_week\": \"%u\",\"day_of_week_abbr\": \"%a\", \"day_of_week_full\": \"%A\",\"hour\": \"%H\",\"minute\": \"%M\",\"second\": \"%S\"}'")
-
         (defwindow calendar [monitor ?bar_hidden]
                    :geometry (geometry :anchor "bottom right"
                                        :x "0px"
@@ -432,15 +584,6 @@ in {
                       :show-details true
                       :show-heading true
                       :show-week-numbers false)))
-
-        (defwidget time [calendar_monitor]
-          (button :active true
-                  :timeout "1s"
-                  :onclick "toggle-menu calendar \"calendar_''${calendar_monitor}\" --arg monitor=\"''${calendar_monitor}\" --arg bar_hidden=$(eww get bar_hidden)"
-                  :tooltip "''${time.day_of_week_full}, ''${time.day} ''${time.month_full} ''${time.year}"
-                  :class "time"
-            (label :text "''${time.hour}:''${time.minute}"
-                   :class "text")))
 
         (defwindow powermenu [monitor ?bar_hidden]
                    :geometry (geometry :anchor "bottom left"
@@ -492,129 +635,6 @@ in {
                          :text "No"
                          :onclick "close-menu \"powermenu_''${monitor}\""))))
 
-        (defwidget power [powermenu_monitor]
-          (box :class "power"
-            (icon :icon "󰐥"
-                  :onclick "toggle-menu powermenu \"powermenu_''${powermenu_monitor}\" --arg monitor=\"''${powermenu_monitor}\" --arg bar_hidden=$(eww get bar_hidden)")))
-
-        (defpoll network :initial '{"ethernet": {"state": "","connection": ""},"wifi": {"state": "","connection": ""}}'
-                         :interval "1s"
-          "${poll_network}")
-
-        (defwidget ethernet []
-          (box :visible {network.ethernet.state != ""}
-               :class "ethernet"
-            (icon :icon {network.ethernet.state == "Connected" ? "󰈁" : "󰈂"}
-                  :onclick "close-active-menus; networkmanager_dmenu -m -5 &"
-                  :tooltip "Ethernet: ''${network.ethernet.state == "Connected" ? "Connected to ''${network.ethernet.connection}" : network.ethernet.state}")))
-
-        (defwidget wifi []
-          (box :visible {network.wifi.state != ""}
-               :class "wifi"
-            (icon :icon {network.wifi.state == "Connected" ? "󰖩" : "󰖪"}
-                  :onclick "close-active-menus; networkmanager_dmenu -m -5 &"
-                  :tooltip "Wifi: ''${network.wifi.state == "Connected" ? "Connected to ''${network.wifi.connection}" : network.wifi.state}")))
-
-        ${if config.hardware.bluetooth.enable then ''
-        (defpoll bluetooth :initial '{"power_state": "Off"}'
-                           :interval "1s"
-          "${poll_bluetooth}")
-
-        (defwidget bluetooth []
-          (box :class "bluetooth"
-            (icon :icon {bluetooth.power_state == "On" ? "󰂯" : "󰂲"}
-                  :onclick "close-active-menus; bzmenu --icon font --launcher custom --launcher-command 'rofi -dmenu -m -5 -p bluetooth' &"
-                  :tooltip "Bluetooth: ''${bluetooth.power_state}")))
-        '' else ""}
-
-        (defwidget _battery [battery]
-          (icon_text :icon {battery.status == "Charging" ? (battery.capacity == 100 ? "󰂅" :
-                                                                    battery.capacity >= 90 ? "󰂋" :
-                                                                    battery.capacity >= 80 ? "󰂊" :
-                                                                    battery.capacity >= 70 ? "󰢞" :
-                                                                    battery.capacity >= 60 ? "󰂉" :
-                                                                    battery.capacity >= 50 ? "󰢝" :
-                                                                    battery.capacity >= 40 ? "󰂈" :
-                                                                    battery.capacity >= 30 ? "󰂇" :
-                                                                    battery.capacity >= 20 ? "󰂆" :
-                                                                    battery.capacity >= 10 ? "󰢜" :
-                                                                    "󰢟") :
-                                    battery.capacity == 100 ? "󰁹" :
-                                    battery.capacity >= 90 ? "󰂂" :
-                                    battery.capacity >= 80 ? "󰂁" :
-                                    battery.capacity >= 70 ? "󰂀" :
-                                    battery.capacity >= 60 ? "󰁿" :
-                                    battery.capacity >= 50 ? "󰁾" :
-                                    battery.capacity >= 40 ? "󰁽" :
-                                    battery.capacity >= 30 ? "󰁼" :
-                                    battery.capacity >= 20 ? "󰁻" :
-                                    battery.capacity >= 10 ? "󰁺" :
-                                    "󰂎"}
-                       :text "''${battery.capacity}%"
-                       :tooltip "Battery: ''${battery.status}"))
-
-        (defwidget battery []
-          (box :class "battery"
-            (_battery :battery {jq(EWW_BATTERY, 'to_entries | map(select(.key | match("^BAT"))) | first.value')})))
-
-        (defwidget memory []
-          (box :class "memory"
-            (icon_text :icon "󰍛"
-                         :text "''${round(EWW_RAM.used_mem_perc, 1)}%"
-                         :tooltip "Memory: Using ''${formatbytes(round(EWW_RAM.used_mem, 0), true)}/''${formatbytes(round(EWW_RAM.total_mem, 0), true)}")))
-
-        (deflisten volume :initial '{"sink":"auto_null"}'
-          "${listen_volume}")
-
-        (defwidget volume []
-          (box :class "volume"
-            (icon_scale :icon {volume.sink == "auto_null" ? "󰸈" :
-                                       volume.muted ? "󰝟" :
-                                       volume.level >= 70 ? "󰕾" :
-                                       volume.level >= 35 ? "󰖀" :
-                                       "󰕿"}
-                          :value {volume.sink == "auto_null" ? 0 : volume.level}
-                          :onclick {volume.sink == "auto_null" ? "" : "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"}
-                          :onchange {volume.sink == "auto_null" ? "" : "wpctl set-volume @DEFAULT_AUDIO_SINK@ {}%"}
-                          :tooltip "Volume: ''${volume.sink == "auto_null" ? "No output" : "''${volume.level}%''${volume.muted ? " (Muted)" : ""}"}")))
-
-        ${if config.hardware.brightness-controls.enable then ''
-        (deflisten brightness :initial 0
-          "${listen_brightness}")
-
-        (defwidget brightness []
-          (box :class "brightness"
-            (icon_scale :icon "󰃟"
-                          :value brightness
-                          :onchange "set-brightness {}"
-                          :tooltip "Brightness: ''${brightness}%")))
-        '' else ""}
-
-        (deflisten workspaces :initial "[]"
-          "${listen_workspaces}")
-
-        (defwidget workspaces [monitor]
-          (box :space-evenly false
-               :spacing 6
-               :class "workspaces"
-            (icon :icon "󰄶"
-                  :onclick "close-active-menus; rofi -m -5 -show-icons -show window &"
-                  :onrightclick "close-active-menus; rofi -m -5 -show-icons -show drun &")
-            (for workspace in {jq(workspaces, 'map(select(.output=="''${monitor}"))')}
-              (button :active true
-                      :timeout "1s"
-                      :onclick 'i3-msg --quiet \'workspace --no-auto-back-and-forth "''${workspace.name}"\'''
-                      :class "workspace''${workspace.focused ? " focused" : ""}''${workspace.urgent ? " urgent" : ""}''${workspace.visible ? " visible" : ""}"
-                (label :text {workspace.name}
-                       :class "text")))))
-
-        (defwidget tray []
-          (box :class "tray"
-            (systray :icon-size 20
-                     :prepend-new true
-                     :space-evenly false
-                     :spacing 12)))
-
         (defwindow bar [monitor]
                    :geometry (geometry :anchor "bottom center"
                                        :height "24px"
@@ -643,8 +663,9 @@ in {
                  :class "right"
               (tray)
               ${if config.hardware.bluetooth.enable then "(bluetooth)" else ""}
-              (ethernet)
               (wifi)
+              (ethernet)
+              (notifications)
               (memory)
               ${if config.hardware.laptop.enable then "(battery)" else ""}
               (time :calendar_monitor monitor))))
