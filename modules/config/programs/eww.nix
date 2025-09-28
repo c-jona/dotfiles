@@ -554,7 +554,7 @@ in {
                :class "workspaces"
             (icon :icon "󰄶"
                   :onclick "close-active-menus; rofi -m -5 -show-icons -show window &"
-                  :onrightclick "close-active-menus; rofi -m -5 -show-icons -show drun &")
+                  :onrightclick "close-active-menus; cd ~; SHLVL=2 rofi -m -5 -show-icons -show drun &")
             (for workspace in {jq(workspaces, 'map(select(.output=="''${monitor}"))')}
               (button :active true
                       :timeout "1s"
