@@ -1,7 +1,7 @@
 { lib, pkgs, ... }:
 let
   gtk_css = ''
-    @define-color accent_color #6b7089;
+    @define-color accent_color #272c42;
     @define-color accent_bg_color #272c42;
     @define-color accent_fg_color #c6c8d1;
 
