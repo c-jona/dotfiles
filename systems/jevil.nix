@@ -7,26 +7,18 @@
   ];
 
   boot = {
-    blacklistedKernelModules = [ "bcma" "bcm43xx" "brcmfmac" "brcmsmac" "brcm80211" "b43" "b43legacy" "iTCO_wdt" "ssb" ];
-    extraModulePackages = with config.boot.kernelPackages; [
-      broadcom_sta
-      nvidia_x11
-    ];
+    blacklistedKernelModules = [ "wdat_wdt" ];
+    extraModulePackages = [ config.boot.kernelPackages.nvidia_x11 ];
     initrd.kernelModules = [ "nvidia" ];
-    kernelModules = [ "kvm-intel" ];
-  };
-
-  fileSystems."/mnt/HDD1" = {
-    device = "/dev/disk/by-uuid/3d3c68d2-684b-416d-bd35-91e1b6aab407";
-    fsType = "ext4";
-    options = [ "nofail" "x-gvfs-show" ];
   };
 
   hardware = {
-    cpu.intel.updateMicrocode = true;
+    bluetooth.enable = true;
+    cpu.amd.updateMicrocode = true;
     enableRedistributableFirmware = true;
     graphics.enable = true;
     nvidia.open = false;
+    xpadneo.enable = true;
   };
 
   services.xserver = {
@@ -46,10 +38,6 @@
     ];
   };
 
-  nixpkgs = {
-    hostPlatform = "x86_64-linux";
-    config.permittedInsecurePackages = [ "broadcom-sta-6.30.223.271-57-6.12.47" ];
-  };
-
+  nixpkgs.hostPlatform = "x86_64-linux";
   system.stateVersion = "25.05";
 }
