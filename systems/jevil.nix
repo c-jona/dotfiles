@@ -7,7 +7,7 @@
   ];
 
   boot = {
-    blacklistedKernelModules = [ "wdat_wdt" ];
+    blacklistedKernelModules = [ "sp5100_tco" ];
     extraModulePackages = [ config.boot.kernelPackages.nvidia_x11 ];
     initrd.kernelModules = [ "nvidia" ];
   };
