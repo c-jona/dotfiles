@@ -230,6 +230,7 @@
     libinput.enable = true;
     nh-clean.enable = true;
     pipewire.enable = true;
+    preload.enable = true;
     xserver = {
       enable = true;
       clipmenu.enable = true;

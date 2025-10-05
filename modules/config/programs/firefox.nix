@@ -7,6 +7,7 @@
       lockPref("full-screen-api.transition-duration.leave", "0 0");
       lockPref("full-screen-api.transition.timeout", 0);
       lockPref("full-screen-api.warning.timeout", 0);
+      lockPref("nglayout.initialpaint.delay", 0);
       lockPref("sidebar.backupState", '{"launcherExpanded":false}');
       lockPref("sidebar.revamp", true);
       lockPref("sidebar.verticalTabs", true);
