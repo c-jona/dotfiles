@@ -78,6 +78,7 @@
         python-lsp-ruff
       ]))
       ripgrep
+      shellcheck
       spotify
       stack
       tree
