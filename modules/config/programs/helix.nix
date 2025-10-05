@@ -19,6 +19,7 @@ in {
             normal = "block";
             select = "block";
           };
+          end-of-line-diagnostics = "hint";
           line-number = "relative";
           lsp = {
             display-color-swatches = false;
