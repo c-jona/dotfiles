@@ -19,7 +19,10 @@ in {
             normal = "block";
             select = "block";
           };
-          end-of-line-diagnostics = "hint";
+          inline-diagnostics = {
+            cursor-line = "hint";
+            max-wrap = 0;
+          };
           line-number = "relative";
           lsp = {
             display-color-swatches = false;
@@ -32,6 +35,10 @@ in {
             max-indent-retain = 0;
             max-wrap = 0;
             wrap-indicator = "";
+          };
+          statusline = {
+            diagnostics = [ "hint" "info" "warning" "error" ];
+            workspace-diagnostics = [ "hint" "info" "warning" "error" ];
           };
           text-width = 120;
           whitespace = {
@@ -127,7 +134,7 @@ in {
         "ui.virtual.indent-guide" = "match-bg"
         "ui.virtual.inlay-hint" = "match-bg"
         "ui.virtual.wrap" = "match-bg"
-        "ui.virtual.jump-label" = { fg = "bright-fg", underline = { color = "bright-fg", style = "dashed" } }
+        "ui.virtual.jump-label" = { fg = "bright-fg", modifiers = [ "bold" ] }
         "ui.menu" = { bg = "dim-bg", fg = "normal-fg" }
         "ui.menu.selected" = { bg = "selected-bg", fg = "bright-fg" }
         "ui.selection" = { bg = "selection-bg" }
@@ -137,12 +144,12 @@ in {
         "ui.cursorcolumn.primary" = { bg = "bright-bg" }
         "ui.cursorcolumn.secondary" = { bg = "bright-bg" }
 
+        "hint" = "blue"
+        "info" = "cyan"
         "warning" = "yellow"
         "error" = "red"
-        "info" = "cyan"
-        "hint" = "dim-fg"
 
-        "diagnostic.hint" = { underline = { color = "dim-fg", style = "curl" } }
+        "diagnostic.hint" = { underline = { color = "blue", style = "curl" } }
         "diagnostic.info" = { underline = { color = "cyan", style = "curl" } }
         "diagnostic.warning" = { underline = { color = "yellow", style = "curl" } }
         "diagnostic.error" = { underline = { color = "red", style = "curl" } }
