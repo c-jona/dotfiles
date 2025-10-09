@@ -643,6 +643,9 @@ in {
             (icon_text :icon "󰜉"
                        :text "Restart"
                        :onclick "open-menu powermenu_confirm \"powermenu_''${monitor}\" --arg monitor=\"''${monitor}\" --arg bar_hidden=$(eww get bar_hidden) --arg icon=\"󰜉\" --arg text=\"Restart?\" --arg command=\"systemctl reboot\"")
+            (icon_text :icon "󰋊"
+                       :text "Hibernate"
+                       :onclick "open-menu powermenu_confirm \"powermenu_''${monitor}\" --arg monitor=\"''${monitor}\" --arg bar_hidden=$(eww get bar_hidden) --arg icon=\"󰋊\" --arg text=\"Hibernate?\" --arg command=\"systemctl hibernate\"")
             (icon_text :icon "󰤄"
                        :text "Sleep"
                        :onclick "open-menu powermenu_confirm \"powermenu_''${monitor}\" --arg monitor=\"''${monitor}\" --arg bar_hidden=$(eww get bar_hidden) --arg icon=\"󰤄\" --arg text=\"Sleep?\" --arg command=\"systemctl suspend\"")
