@@ -6,6 +6,8 @@ in lib.mkMerge [
       extensions = with pkgs.vscode-extensions; [
         bbenoist.nix
         mkhl.direnv
+        ms-python.python
+        ms-vscode.cpptools
       ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
         {
           name = "iceberg-theme";
