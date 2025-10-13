@@ -59,6 +59,7 @@
       fastfetch
       feh
       gcc
+      gdb
       ghc
       gnumake
       haskell-language-server
