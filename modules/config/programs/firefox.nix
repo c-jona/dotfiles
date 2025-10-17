@@ -160,14 +160,6 @@
         Default = "Google";
         DefaultPrivate = "Google";
         PreventInstalls = true;
-        Remove = [
-          "Bing"
-          "DuckDuckGo"
-          "eBay"
-          "Ecosia"
-          "Qwant"
-          "Wikipedia (en)"
-        ];
       };
       SkipTermsOfUse = true;
       TranslateEnabled = false;
