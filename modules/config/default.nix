@@ -78,7 +78,9 @@
         python-lsp-server
         python-lsp-ruff
       ]))
+      R
       ripgrep
+      rstudio
       shellcheck
       spotify
       stack
