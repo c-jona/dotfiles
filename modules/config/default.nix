@@ -187,7 +187,6 @@
       (final: prev: with nixpkgs-unstable.legacyPackages.${prev.system}; {
         inherit
           bzmenu
-          tuigreet
           ;
       })
     ];

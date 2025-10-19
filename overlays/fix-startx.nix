@@ -6,7 +6,7 @@ final: prev:
       prevAttrs:
         {
           postFixup = prevAttrs.postFixup + ''
-            sed -i 's/^    xserverauthfile="\$HOME\/\.serverauth\.\$\$"$/    xserverauthfile="$HOME\/.Xauthority"/' $out/bin/startx
+            sed -i 's/^    xserverauthfile=\$HOME\/\.serverauth\.\$\$$/    xserverauthfile="$HOME\/.Xauthority"/' $out/bin/startx
           '';
         }
     );
