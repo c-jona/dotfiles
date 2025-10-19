@@ -24,9 +24,9 @@ in {
           esac
         '';
       };
-      logind.settings.Login = {
-        HandleLidSwitch = "ignore";
-        HandleLidSwitchDocked = "ignore";
+      logind = {
+        lidSwitch = "ignore";
+        lidSwitchDocked = "ignore";
       };
       thermald.enable = true;
       tlp.enable = true;

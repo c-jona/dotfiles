@@ -1,4 +1,4 @@
-{ self, ... }@inputs:
+{ self, nixpkgs-unstable, ... }@inputs:
 { config, pkgs, ... }:
 {
   imports = [ self.nixosModules.home-files ] ++ self.lib.importNixFilesWithArgsRecursive inputs ./.;
@@ -182,6 +182,12 @@
     overlays = with self.overlays; [
       default
       fix-startx
+      (final: prev: with nixpkgs-unstable.legacyPackages.${prev.system}; {
+        inherit
+          bzmenu
+          tuigreet
+          ;
+      })
     ];
   };
 

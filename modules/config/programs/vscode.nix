@@ -1,25 +1,27 @@
 { config, lib, pkgs, ... }:
 let cfg = config.programs.vscode;
-in lib.mkMerge [
-  {
-    programs.vscode = {
-      extensions = with pkgs.vscode-extensions; [
-        bbenoist.nix
-        mkhl.direnv
-        ms-python.python
-        ms-vscode.cpptools
-      ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
-        {
-          name = "iceberg-theme";
-          publisher = "cocopon";
-          version = "2.0.4";
-          sha256 = "CZxXZPjfj6SDjeZWdP2BUpNnn3zmUWYR2/TuIrjO/3Y=";
-        }
-      ];
-      package = pkgs.vscode-fhs;
-    };
-  }
-  (lib.mkIf cfg.enable {
+in {
+  options.programs.vscode.enable = lib.mkEnableOption "vscode";
+
+  config = lib.mkIf cfg.enable {
+    environment.systemPackages = [
+      (pkgs.vscode-with-extensions.override {
+        vscodeExtensions = with pkgs.vscode-extensions; [
+          bbenoist.nix
+          mkhl.direnv
+          ms-python.python
+          ms-vscode.cpptools
+        ] ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
+          {
+            name = "iceberg-theme";
+            publisher = "cocopon";
+            version = "2.0.4";
+            sha256 = "CZxXZPjfj6SDjeZWdP2BUpNnn3zmUWYR2/TuIrjO/3Y=";
+          }
+        ];
+      })
+    ];
+
     home-files.allUsers.".config/Code/User/settings.json" = (
       (pkgs.formats.json {}).generate
       "settings.json"
@@ -95,5 +97,5 @@ in lib.mkMerge [
         "workbench.startupEditor" = "none";
       }
     );
-  })
-]
+  };
+}

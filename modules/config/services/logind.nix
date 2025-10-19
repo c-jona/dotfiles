@@ -1,6 +1,6 @@
 {
-  services.logind.settings.Login = {
-    HandlePowerKey = "ignore";
-    HandlePowerKeyLongPress = "poweroff";
+  services.logind = {
+    powerKey = "ignore";
+    powerKeyLongPress = "poweroff";
   };
 }
