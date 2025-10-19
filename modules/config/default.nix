@@ -66,6 +66,7 @@
       inotify-tools
       jdk
       jdt-language-server
+      jetbrains.idea-community
       jq
       krita
       mocu-xcursor
