@@ -74,6 +74,7 @@
       mpv
       nil
       pinentry-gnome3
+      prismlauncher
       pulsemixer
       (python3.withPackages (python-pkgs: with python-pkgs; [
         python-lsp-server
