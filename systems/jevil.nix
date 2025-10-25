@@ -8,7 +8,6 @@
 
   boot = {
     blacklistedKernelModules = [ "sp5100_tco" ];
-    extraModulePackages = [ config.boot.kernelPackages.nvidia_x11 ];
     initrd.kernelModules = [ "nvidia" ];
   };
 
@@ -17,7 +16,12 @@
     cpu.amd.updateMicrocode = true;
     enableRedistributableFirmware = true;
     graphics.enable = true;
-    nvidia.open = false;
+    nvidia = {
+      modesetting.enable = true;
+      open = false;
+      package = config.boot.kernelPackages.nvidiaPackages.latest;
+      powerManagement.enable = true;
+    };
     xpadneo.enable = true;
   };
 
