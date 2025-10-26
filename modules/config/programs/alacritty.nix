@@ -112,8 +112,8 @@ in {
         };
         font = {
           normal.family = "MartianMono Nerd Font";
-          size = 13;
-          offset.y = 2;
+          size = 12.75;
+          offset.y = 3;
           glyph_offset.y = 1;
         };
         hints.enabled = [
@@ -147,7 +147,7 @@ in {
     ).overrideAttrs (finalAttrs: prevAttrs: {
       buildCommand = lib.concatStringsSep "\n" [
         prevAttrs.buildCommand
-        "substituteInPlace \"$out\" --replace '\\\\' '\\'"
+        "substituteInPlace \"$out\" --replace-fail '\\\\' '\\'"
       ];
     });
   };
