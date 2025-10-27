@@ -69,6 +69,7 @@
       jetbrains.idea-community
       jq
       krita
+      lutris
       mocu-xcursor
       morewaita-icon-theme
       mpv
@@ -90,6 +91,7 @@
       typescript-language-server
       vscode-langservers-extracted
       wget
+      wine
     ];
     variables = {
       EDITOR = "hx";
