@@ -19,7 +19,7 @@ let
   manage_outputs = pkgs.writeShellScript "i3_manage_outputs" ''
     $(eww get bar_hidden) || ${spawn_bars}
     i3-msg -t subscribe -m '["output"]' | while read _; do
-      apply-wallpaper  # Fix wallpaper being broken sometimes
+      apply-wallpaper # Fix wallpaper being broken sometimes
       $(eww get bar_hidden) || ${spawn_bars}
     done
   '';
@@ -58,7 +58,27 @@ let
     i3-msg --quiet "workspace back_and_forth; move workspace to output $1; workspace \"$prev_workspace\"; workspace back_and_forth"
   '';
 
-  move_focused_workspaces_to_output = pkgs.writeShellScript "i3_move_focused_workspaces_to_output" '''';
+  workspace_next_prev_on_all_outputs = next:
+    pkgs.writeShellScript "i3_workspace_${if next then "next" else "prev"}_on_all_outputs" ''
+      IFS=$'\n' read -d "" -r -a outputs < <(i3-msg -t get_outputs | jq -r '.[] | select(.current_workspace!=null) | .name')
+      ((''${#outputs[@]} == 1)) && { i3-msg --quiet 'workspace ${if next then "next" else "prev"}_on_output'; exit; }
+      IFS=$'\n' read -d "" -r current_output < <(i3-msg -t get_workspaces | jq -r '.[] | select(.focused) | .output')
+      for output in "''${outputs[@]}"; do
+        i3-msg --quiet "focus output \"$output\"; workspace ${if next then "next" else "prev"}_on_output"
+      done
+      i3-msg --quiet "focus output \"$current_output\""
+    '';
+
+  move_focused_workspaces_to_output = pkgs.writeShellScript "i3_move_focused_workspaces_to_output" ''
+    (($# < 1)) && exit 1
+    IFS=$'\n' read -d "" -r -a focused_workspaces < <(i3-msg -t get_outputs | jq -r '.[] | select(.current_workspace!=null) | .current_workspace')
+    ((''${#focused_workspaces[@]} == 1)) && exit
+    IFS=$'\n' read -d "" -r current_workspace current_output < <(i3-msg -t get_workspaces | jq -r '.[] | select(.focused) | [.name, .output][]')
+    for workspace in "''${focused_workspaces[@]}"; do
+      i3-msg --quiet "workspace --no-auto-back-and-forth \"$workspace\"; move workspace to output $1"
+    done
+    i3-msg --quiet "workspace --no-auto-back-and-forth \"$current_workspace\"; focus output \"$current_output\""
+  '';
 
   move_all_workspaces_to_output = pkgs.writeShellScript "i3_move_all_workspaces_to_output" ''
     (($# < 1)) && exit 1
@@ -255,17 +275,13 @@ in lib.mkMerge [
             (bind "Mod4+Shift+p" ''move container to workspace next_on_output; workspace next_on_output'')
             (bind "Mod4+Ctrl+Shift+p" ''[workspace=__focused__] move container to workspace next_on_output; workspace next_on_output'')
 
-            (bind "Mod4+bracketleft" ''focus output left'')
-            (bind "Mod4+Ctrl+bracketleft" ''exec --no-startup-id "${move_workspace_to_output} left"'')
-            (bind "Mod4+Shift+braceleft" ''move container to output left; focus output left'')
-            (bind "Mod4+Ctrl+Shift+braceleft" ''[workspace=__focused__] move container to output left; focus output left'')
-            # (bind "Mod4+Ctrl+Shift+braceleft" ''exec --no-startup-id "${move_all_workspaces_to_output} left"'')
+            (bind "Mod4+bracketleft" ''exec --no-startup-id ${workspace_next_prev_on_all_outputs false}'')
+            (bind "Mod4+Shift+braceleft" ''exec --no-startup-id "${move_focused_workspaces_to_output} left"'')
+            (bind "Mod4+Ctrl+Shift+braceleft" ''exec --no-startup-id "${move_focused_workspaces_to_output} left"'')
 
-            (bind "Mod4+bracketright" ''focus output right'')
-            (bind "Mod4+Ctrl+bracketright" ''exec --no-startup-id "${move_workspace_to_output} right"'')
-            (bind "Mod4+Shift+braceright" ''move container to output right; focus output right'')
-            (bind "Mod4+Ctrl+Shift+braceright" ''[workspace=__focused__] move container to output right; focus output right'')
-            # (bind "Mod4+Ctrl+Shift+braceright" ''exec --no-startup-id "${move_all_workspaces_to_output} right"'')
+            (bind "Mod4+bracketright" ''exec --no-startup-id ${workspace_next_prev_on_all_outputs true}'')
+            (bind "Mod4+Shift+braceright" ''exec --no-startup-id "${move_focused_workspaces_to_output} right"'')
+            (bind "Mod4+Ctrl+Shift+braceright" ''exec --no-startup-id "${move_all_workspaces_to_output} right"'')
 
             (bind "Mod4+h" ''focus left'')
             (bind "Mod4+Shift+h" ''move left 40 px'')
@@ -283,18 +299,22 @@ in lib.mkMerge [
             (bind "Mod4+Shift+l" ''move right 40 px'')
             (bind "Mod4+Ctrl+Shift+l" ''resize grow width 40 px'')
 
-            # (bind "Mod4+semicolon" ''focus output next'')
-            # (bind "Mod4+Ctrl+semicolon" ''exec --no-startup-id "${move_workspace_to_output} next"'')
-            # (bind "Mod4+Shift+colon" ''move container to output next; focus output next'')
-            # (bind "Mod4+Ctrl+Shift+colon" ''[workspace=__focused__] move container to output next; focus output next'')
-            # (bind "Mod4+Ctrl+Shift+colon" ''exec --no-startup-id "${move_all_workspaces_to_output} next"'')
-
             (bind "Mod4+Return" ''exec --no-startup-id "$TERMINAL"'')
 
             (bind "Mod4+c" ''exec --no-startup-id "clipmenu -p clipboard"'')
             (bind "Mod4+Shift+c" ''exec --no-startup-id "xcolor --selection"'')
 
             (bind "Mod4+n" ''exec --no-startup-id networkmanager_dmenu'')
+
+            (bind "Mod4+comma" ''focus output left'')
+            (bind "Mod4+Ctrl+comma" ''exec --no-startup-id "${move_workspace_to_output} left"'')
+            (bind "Mod4+Shift+less" ''move container to output left; focus output left'')
+            (bind "Mod4+Ctrl+Shift+less" ''[workspace=__focused__] move container to output left; focus output left'')
+
+            (bind "Mod4+period" ''focus output right'')
+            (bind "Mod4+Ctrl+period" ''exec --no-startup-id "${move_workspace_to_output} right"'')
+            (bind "Mod4+Shift+greater" ''move container to output right; focus output right'')
+            (bind "Mod4+Ctrl+Shift+greater" ''[workspace=__focused__] move container to output right; focus output right'')
 
             (bind "Mod4+space" ''exec --no-startup-id "rofi -show-icons -show window"'')
 

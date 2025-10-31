@@ -112,7 +112,6 @@ in {
         home-files-setup = ''
           shopt -s dotglob globstar nullglob
           CURRENT_FILES="$(readlink -s "$XDG_STATE_HOME/home-files" || true)"
-          [[ $CURRENT_FILES == "$HOME_FILES" ]] && exit
 
           if [[ $CURRENT_FILES == "$NIX_STORE_DIR"/*-home-files ]]; then
             removeDirs=()
