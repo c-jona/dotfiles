@@ -553,8 +553,7 @@ in {
                :spacing 6
                :class "workspaces"
             (icon :icon "󰄶"
-                  :onclick "close-active-menus; rofi -m -5 -show-icons -show window &"
-                  :onrightclick "close-active-menus; cd ~; SHLVL=2 rofi -m -5 -show-icons -show drun &")
+                  :onclick "close-active-menus; rofi -m -5 -show-icons -show window &")
             (for workspace in {jq(workspaces, 'map(select(.output=="''${monitor}"))')}
               (button :active true
                       :timeout "1s"
@@ -697,11 +696,12 @@ in {
               ${if config.hardware.brightness-controls.enable then "(brightness)" else ""}
               (volume)
               (microphone))
-            (box :space-evenly false
-                 :spacing 24
-                 :halign "center"
-                 :class "center"
-              (workspaces :monitor monitor))
+            (eventbox :onrightclick "close-active-menus; cd ~; SHLVL=2 rofi -m -5 -show-icons -show drun &"
+              (box :space-evenly false
+                   :spacing 24
+                   :halign "center"
+                   :class "center"
+                (workspaces :monitor monitor)))
             (box :space-evenly false
                  :spacing 24
                  :halign "end"

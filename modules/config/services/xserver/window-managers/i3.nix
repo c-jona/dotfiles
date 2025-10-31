@@ -51,22 +51,26 @@ let
       esac
     '';
 
-  move_workspace_to_next_output = pkgs.writeShellScript "i3_move_workspace_to_next_output" ''
+  move_workspace_to_output = pkgs.writeShellScript "i3_move_workspace_to_output" ''
+    (($# < 1)) && exit 1
     i3-msg --quiet 'workspace back_and_forth'
     prev_workspace="$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused).name')"
-    i3-msg --quiet "workspace back_and_forth; move workspace to output next; workspace \"$prev_workspace\"; workspace back_and_forth"
+    i3-msg --quiet "workspace back_and_forth; move workspace to output $1; workspace \"$prev_workspace\"; workspace back_and_forth"
   '';
 
-  move_all_workspaces_to_next_output = pkgs.writeShellScript "i3_move_all_workspaces_to_next_output" ''
+  move_focused_workspaces_to_output = pkgs.writeShellScript "i3_move_focused_workspaces_to_output" '''';
+
+  move_all_workspaces_to_output = pkgs.writeShellScript "i3_move_all_workspaces_to_output" ''
+    (($# < 1)) && exit 1
     declare -A "focused_workspaces=($(i3-msg -t get_outputs | jq -r '.[] | select(.current_workspace!=null) | "[" + .name + "]=\"" + .current_workspace + "\""'))"
     ((''${#focused_workspaces[@]} == 1)) && exit
     IFS=$'\n' read -d "" -r current_workspace current_output < <(i3-msg -t get_workspaces | jq -r '.[] | select(.focused) | [.name, .output][]')
     IFS=$'\n' read -d "" -r -a workspaces < <(i3-msg -t get_workspaces | jq -r 'map(.name)[]')
     for workspace in "''${workspaces[@]}"; do
-      i3-msg --quiet "workspace --no-auto-back-and-forth \"$workspace\"; move workspace to output next"
+      i3-msg --quiet "workspace --no-auto-back-and-forth \"$workspace\"; move workspace to output $1"
     done
     for output in "''${!focused_workspaces[@]}"; do
-      i3-msg --quiet "focus output \"$output\"; focus output next; workspace --no-auto-back-and-forth \"''${focused_workspaces["$output"]}\""
+      i3-msg --quiet "focus output \"$output\"; focus output $1; workspace --no-auto-back-and-forth \"''${focused_workspaces["$output"]}\""
     done
     i3-msg --quiet "workspace --no-auto-back-and-forth \"$current_workspace\"; focus output \"$current_output\""
   '';
@@ -157,70 +161,70 @@ in lib.mkMerge [
         keybinds = rec {
           "default" = [
             (bind "Print" ''exec --no-startup-id "screenshot-select"'')
-            (bind "Shift+Print" ''exec --no-startup-id "screenshot \\"$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused).output')\\""'')
+            (bind "Ctrl+Print" ''exec --no-startup-id "screenshot \\"$(i3-msg -t get_workspaces | jq -r '.[] | select(.focused).output')\\""'')
 
-            (bind "Mod4+Shift+asciitilde" ''exec --no-startup-id "i3lock-color"'')
+            (bind "Mod4+Ctrl+grave" ''exec --no-startup-id "i3lock-color"'')
 
             (bind "Mod4+1" ''workspace 1'')
-            (bind "Mod4+Shift+1" ''move container to workspace 1; workspace 1'')
             (bind "Mod4+Ctrl+1" ''exec --no-startup-id "${move_workspace_to_current_output} 1"'')
-            (bind "Mod4+Ctrl+Shift+1" ''move container to workspace 1; exec --no-startup-id "${move_workspace_to_current_output} 1"'')
+            (bind "Mod4+Shift+1" ''move container to workspace 1; workspace 1'')
+            (bind "Mod4+Ctrl+Shift+1" ''[workspace=__focused__] move container to workspace 1; workspace 1'')
 
             (bind "Mod4+2" ''workspace 2'')
-            (bind "Mod4+Shift+2" ''move container to workspace 2; workspace 2'')
             (bind "Mod4+Ctrl+2" ''exec --no-startup-id "${move_workspace_to_current_output} 2"'')
-            (bind "Mod4+Ctrl+Shift+2" ''move container to workspace 2; exec --no-startup-id "${move_workspace_to_current_output} 2"'')
+            (bind "Mod4+Shift+2" ''move container to workspace 2; workspace 2'')
+            (bind "Mod4+Ctrl+Shift+2" ''[workspace=__focused__] move container to workspace 2; workspace 2'')
 
             (bind "Mod4+3" ''workspace 3'')
-            (bind "Mod4+Shift+3" ''move container to workspace 3; workspace 3'')
             (bind "Mod4+Ctrl+3" ''exec --no-startup-id "${move_workspace_to_current_output} 3"'')
-            (bind "Mod4+Ctrl+Shift+3" ''move container to workspace 3; exec --no-startup-id "${move_workspace_to_current_output} 3"'')
+            (bind "Mod4+Shift+3" ''move container to workspace 3; workspace 3'')
+            (bind "Mod4+Ctrl+Shift+3" ''[workspace=__focused__] move container to workspace 3; workspace 3'')
 
             (bind "Mod4+4" ''workspace 4'')
-            (bind "Mod4+Shift+4" ''move container to workspace 4; workspace 4'')
             (bind "Mod4+Ctrl+4" ''exec --no-startup-id "${move_workspace_to_current_output} 4"'')
-            (bind "Mod4+Ctrl+Shift+4" ''move container to workspace 4; exec --no-startup-id "${move_workspace_to_current_output} 4"'')
+            (bind "Mod4+Shift+4" ''move container to workspace 4; workspace 4'')
+            (bind "Mod4+Ctrl+Shift+4" ''[workspace=__focused__] move container to workspace 4; workspace 4'')
 
             (bind "Mod4+5" ''workspace 5'')
-            (bind "Mod4+Shift+5" ''move container to workspace 5; workspace 5'')
             (bind "Mod4+Ctrl+5" ''exec --no-startup-id "${move_workspace_to_current_output} 5"'')
-            (bind "Mod4+Ctrl+Shift+5" ''move container to workspace 5; exec --no-startup-id "${move_workspace_to_current_output} 5"'')
+            (bind "Mod4+Shift+5" ''move container to workspace 5; workspace 5'')
+            (bind "Mod4+Ctrl+Shift+5" ''[workspace=__focused__] move container to workspace 5; workspace 5'')
 
             (bind "Mod4+6" ''workspace 6'')
-            (bind "Mod4+Shift+6" ''move container to workspace 6; workspace 6'')
             (bind "Mod4+Ctrl+6" ''exec --no-startup-id "${move_workspace_to_current_output} 6"'')
-            (bind "Mod4+Ctrl+Shift+6" ''move container to workspace 6; exec --no-startup-id "${move_workspace_to_current_output} 6"'')
+            (bind "Mod4+Shift+6" ''move container to workspace 6; workspace 6'')
+            (bind "Mod4+Ctrl+Shift+6" ''[workspace=__focused__] move container to workspace 6; workspace 6'')
 
             (bind "Mod4+7" ''workspace 7'')
-            (bind "Mod4+Shift+7" ''move container to workspace 7; workspace 7'')
             (bind "Mod4+Ctrl+7" ''exec --no-startup-id "${move_workspace_to_current_output} 7"'')
-            (bind "Mod4+Ctrl+Shift+7" ''move container to workspace 7; exec --no-startup-id "${move_workspace_to_current_output} 7"'')
+            (bind "Mod4+Shift+7" ''move container to workspace 7; workspace 7'')
+            (bind "Mod4+Ctrl+Shift+7" ''[workspace=__focused__] move container to workspace 7; workspace 7'')
 
             (bind "Mod4+8" ''workspace 8'')
-            (bind "Mod4+Shift+8" ''move container to workspace 8; workspace 8'')
             (bind "Mod4+Ctrl+8" ''exec --no-startup-id "${move_workspace_to_current_output} 8"'')
-            (bind "Mod4+Ctrl+Shift+8" ''move container to workspace 8; exec --no-startup-id "${move_workspace_to_current_output} 8"'')
+            (bind "Mod4+Shift+8" ''move container to workspace 8; workspace 8'')
+            (bind "Mod4+Ctrl+Shift+8" ''[workspace=__focused__] move container to workspace 8; workspace 8'')
 
             (bind "Mod4+9" ''workspace 9'')
-            (bind "Mod4+Shift+9" ''move container to workspace 9; workspace 9'')
             (bind "Mod4+Ctrl+9" ''exec --no-startup-id "${move_workspace_to_current_output} 9"'')
-            (bind "Mod4+Ctrl+Shift+9" ''move container to workspace 9; exec --no-startup-id "${move_workspace_to_current_output} 9"'')
+            (bind "Mod4+Shift+9" ''move container to workspace 9; workspace 9'')
+            (bind "Mod4+Ctrl+Shift+9" ''[workspace=__focused__] move container to workspace 9; workspace 9'')
 
             (bind "Mod4+0" ''workspace 10'')
-            (bind "Mod4+Shift+0" ''move container to workspace 10; workspace 10'')
             (bind "Mod4+Ctrl+0" ''exec --no-startup-id "${move_workspace_to_current_output} 10"'')
-            (bind "Mod4+Ctrl+Shift+0" ''move container to workspace 10; exec --no-startup-id "${move_workspace_to_current_output} 10"'')
+            (bind "Mod4+Shift+0" ''move container to workspace 10; workspace 10'')
+            (bind "Mod4+Ctrl+Shift+0" ''[workspace=__focused__] move container to workspace 10; workspace 10'')
 
             (bind "Mod4+Tab" ''workspace back_and_forth'')
-            (bind "Mod4+Shift+Tab" ''move container to workspace back_and_forth; workspace back_and_forth'')
             (bind "Mod4+Ctrl+Tab" ''exec --no-startup-id "${move_workspace_to_current_output} back_and_forth"'')
-            (bind "Mod4+Ctrl+Shift+Tab" ''move container to workspace back_and_forth; exec --no-startup-id "${move_workspace_to_current_output} back_and_forth"'')
+            (bind "Mod4+Shift+Tab" ''move container to workspace back_and_forth; workspace back_and_forth'')
+            (bind "Mod4+Ctrl+Shift+Tab" ''[workspace=__focused__] move container to workspace back_and_forth; workspace back_and_forth'')
 
             (bind "Mod4+minus" ''fullscreen toggle'')
             (bind "Mod4+Shift+underscore" ''exec --no-startup-id ${toggle_bar}'')
 
             (bind "Mod4+q" ''kill'')
-            (bind "Mod4+Shift+q" ''[workspace=__focused__] kill'')
+            (bind "Mod4+Ctrl+q" ''[workspace=__focused__] kill'')
 
             (bind "Mod4+w" ''focus prev'')
             (bind "Mod4+Shift+w" ''exec --no-startup-id ${move_next_prev false}'')
@@ -235,7 +239,7 @@ in lib.mkMerge [
             (bind "Mod4+Shift+t" ''floating toggle'')
 
             (bind "Mod4+y" ''layout toggle tabbed split'')
-            (bind "Mod4+Shift+y" ''layout toggle split'')
+            (bind "Mod4+Ctrl+y" ''layout toggle split'')
 
             (bind "Mod4+u" ''focus parent'')
             (bind "Mod4+Shift+u" ''split vertical'')
@@ -245,30 +249,45 @@ in lib.mkMerge [
 
             (bind "Mod4+o" ''workspace prev_on_output'')
             (bind "Mod4+Shift+o" ''move container to workspace prev_on_output; workspace prev_on_output'')
+            (bind "Mod4+Ctrl+Shift+o" ''[workspace=__focused__] move container to workspace prev_on_output; workspace prev_on_output'')
 
             (bind "Mod4+p" ''workspace next_on_output'')
             (bind "Mod4+Shift+p" ''move container to workspace next_on_output; workspace next_on_output'')
+            (bind "Mod4+Ctrl+Shift+p" ''[workspace=__focused__] move container to workspace next_on_output; workspace next_on_output'')
+
+            (bind "Mod4+bracketleft" ''focus output left'')
+            (bind "Mod4+Ctrl+bracketleft" ''exec --no-startup-id "${move_workspace_to_output} left"'')
+            (bind "Mod4+Shift+braceleft" ''move container to output left; focus output left'')
+            (bind "Mod4+Ctrl+Shift+braceleft" ''[workspace=__focused__] move container to output left; focus output left'')
+            # (bind "Mod4+Ctrl+Shift+braceleft" ''exec --no-startup-id "${move_all_workspaces_to_output} left"'')
+
+            (bind "Mod4+bracketright" ''focus output right'')
+            (bind "Mod4+Ctrl+bracketright" ''exec --no-startup-id "${move_workspace_to_output} right"'')
+            (bind "Mod4+Shift+braceright" ''move container to output right; focus output right'')
+            (bind "Mod4+Ctrl+Shift+braceright" ''[workspace=__focused__] move container to output right; focus output right'')
+            # (bind "Mod4+Ctrl+Shift+braceright" ''exec --no-startup-id "${move_all_workspaces_to_output} right"'')
 
             (bind "Mod4+h" ''focus left'')
             (bind "Mod4+Shift+h" ''move left 40 px'')
-            (bind "Mod4+Ctrl+h" ''resize shrink width 40 px'')
+            (bind "Mod4+Ctrl+Shift+h" ''resize shrink width 40 px'')
 
             (bind "Mod4+j" ''focus down'')
             (bind "Mod4+Shift+j" ''move down 40 px'')
-            (bind "Mod4+Ctrl+j" ''resize grow height 40 px'')
+            (bind "Mod4+Ctrl+Shift+j" ''resize grow height 40 px'')
 
             (bind "Mod4+k" ''focus up'')
             (bind "Mod4+Shift+k" ''move up 40 px'')
-            (bind "Mod4+Ctrl+k" ''resize shrink height 40 px'')
+            (bind "Mod4+Ctrl+Shift+k" ''resize shrink height 40 px'')
 
             (bind "Mod4+l" ''focus right'')
             (bind "Mod4+Shift+l" ''move right 40 px'')
-            (bind "Mod4+Ctrl+l" ''resize grow width 40 px'')
+            (bind "Mod4+Ctrl+Shift+l" ''resize grow width 40 px'')
 
-            (bind "Mod4+semicolon" ''focus output next'')
-            (bind "Mod4+Shift+colon" ''move container to output next; focus output next'')
-            (bind "Mod4+Ctrl+semicolon" ''exec --no-startup-id ${move_workspace_to_next_output}'')
-            (bind "Mod4+Ctrl+Shift+colon" ''exec --no-startup-id ${move_all_workspaces_to_next_output}'')
+            # (bind "Mod4+semicolon" ''focus output next'')
+            # (bind "Mod4+Ctrl+semicolon" ''exec --no-startup-id "${move_workspace_to_output} next"'')
+            # (bind "Mod4+Shift+colon" ''move container to output next; focus output next'')
+            # (bind "Mod4+Ctrl+Shift+colon" ''[workspace=__focused__] move container to output next; focus output next'')
+            # (bind "Mod4+Ctrl+Shift+colon" ''exec --no-startup-id "${move_all_workspaces_to_output} next"'')
 
             (bind "Mod4+Return" ''exec --no-startup-id "$TERMINAL"'')
 
@@ -281,19 +300,19 @@ in lib.mkMerge [
 
             (bind "Mod4+Left" ''focus left'')
             (bind "Mod4+Shift+Left" ''move left 40 px'')
-            (bind "Mod4+Ctrl+Left" ''resize shrink width 40 px'')
+            (bind "Mod4+Ctrl+Shift+Left" ''resize shrink width 40 px'')
 
             (bind "Mod4+Down" ''focus down'')
             (bind "Mod4+Shift+Down" ''move down 40 px'')
-            (bind "Mod4+Ctrl+Down" ''resize grow height 40 px'')
+            (bind "Mod4+Ctrl+Shift+Down" ''resize grow height 40 px'')
 
             (bind "Mod4+Up" ''focus up'')
             (bind "Mod4+Shift+Up" ''move up 40 px'')
-            (bind "Mod4+Ctrl+Up" ''resize shrink height 40 px'')
+            (bind "Mod4+Ctrl+Shift+Up" ''resize shrink height 40 px'')
 
             (bind "Mod4+Right" ''focus right'')
             (bind "Mod4+Shift+Right" ''move right 40 px'')
-            (bind "Mod4+Ctrl+Right" ''resize grow width 40 px'')
+            (bind "Mod4+Ctrl+Shift+Right" ''resize grow width 40 px'')
           ] ++ (
             if config.hardware.bluetooth.enable
             then [
