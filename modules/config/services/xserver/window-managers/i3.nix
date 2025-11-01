@@ -60,18 +60,20 @@ let
 
   workspace_next_prev_on_all_outputs = next:
     pkgs.writeShellScript "i3_workspace_${if next then "next" else "prev"}_on_all_outputs" ''
-      IFS=$'\n' read -d "" -r -a outputs < <(i3-msg -t get_outputs | jq -r '.[] | select(.current_workspace!=null) | .name')
+      IFS=$'\n' read -d "" -r -a outputs < <(i3-msg -t get_outputs | jq -r '.[] | select(.current_workspace!=null).name')
       ((''${#outputs[@]} == 1)) && { i3-msg --quiet 'workspace ${if next then "next" else "prev"}_on_output'; exit; }
-      IFS=$'\n' read -d "" -r current_output < <(i3-msg -t get_workspaces | jq -r '.[] | select(.focused) | .output')
+      IFS=$'\n' read -d "" -r current_output < <(i3-msg -t get_workspaces | jq -r '.[] | select(.focused).output')
       for output in "''${outputs[@]}"; do
-        i3-msg --quiet "focus output \"$output\"; workspace ${if next then "next" else "prev"}_on_output"
+        if [[ $output != "$current_output" ]]; then
+          i3-msg --quiet "focus output \"$output\"; workspace ${if next then "next" else "prev"}_on_output"
+        fi
       done
-      i3-msg --quiet "focus output \"$current_output\""
+      i3-msg --quiet "focus output \"$current_output\"; workspace ${if next then "next" else "prev"}_on_output"
     '';
 
   move_focused_workspaces_to_output = pkgs.writeShellScript "i3_move_focused_workspaces_to_output" ''
     (($# < 1)) && exit 1
-    IFS=$'\n' read -d "" -r -a focused_workspaces < <(i3-msg -t get_outputs | jq -r '.[] | select(.current_workspace!=null) | .current_workspace')
+    IFS=$'\n' read -d "" -r -a focused_workspaces < <(i3-msg -t get_outputs | jq -r '.[] | select(.current_workspace!=null).current_workspace')
     ((''${#focused_workspaces[@]} == 1)) && exit
     IFS=$'\n' read -d "" -r current_workspace current_output < <(i3-msg -t get_workspaces | jq -r '.[] | select(.focused) | [.name, .output][]')
     for workspace in "''${focused_workspaces[@]}"; do
