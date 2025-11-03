@@ -25,6 +25,7 @@ in {
           };
           line-number = "relative";
           lsp = {
+            auto-signature-help = false;
             display-color-swatches = false;
             display-signature-help-docs = false;
           };
