@@ -55,6 +55,7 @@
       bc
       clang
       clang-tools
+      cmake
       discord
       fastfetch
       feh
