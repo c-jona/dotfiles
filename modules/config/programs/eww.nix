@@ -90,61 +90,34 @@ let
     done
   '';
 
-  listen_microphone = pkgs.writeShellScript "eww_listen_microphone" ''
-    set_default_source() {
-      default_source="$(pactl get-default-source)"
-      default_source_index=$(pactl --format=json list sources short | jq ".[] | select(.name==\"$default_source\").index")
-    }
+  listen_microphone_volume = microphone:
+    pkgs.writeShellScript "eww_listen_${if microphone then "microphone" else "volume"}" ''
+      set_default() {
+        default="$(pactl get-default-${if microphone then "source" else "sink"})"
+        default_index=$(pactl --format=json list ${if microphone then "sources" else "sinks"} short | jq ".[] | select(.name==\"$default\").index")
+      }
 
-    get_status() {
-      pactl --format=json list sources | jq -c ".[] | select(.index==$default_source_index) | {\"source\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume[].value_percent | rtrimstr(\"%\") | tonumber}"
-    }
+      get_status() {
+        pactl --format=json list ${if microphone then "sources" else "sinks"} | jq -c ".[] | select(.index==$default_index) | {\"${if microphone then "source" else "sink"}\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume[].value_percent | rtrimstr(\"%\") | tonumber}"
+      }
 
-    sleep 1
-    default_source_index=""
-    while [[ -z "$default_source_index" ]]; do
-      set_default_source
-      sleep 0.05
-    done
+      sleep 1
+      default_index=""
+      while [[ -z "$default_index" ]]; do
+        set_default
+        sleep 0.05
+      done
 
-    get_status
-    pactl --format=json subscribe | while read -r EVENT; do
-      if $(jq ".event==\"change\" and (.on==\"server\" or (.on==\"source\" and .index==$default_source_index))" <<< "$EVENT"); then
-        if $(jq '.on=="server"' <<< "$EVENT"); then
-          set_default_source
+      get_status
+      pactl --format=json subscribe | while read -r EVENT; do
+        if $(jq ".event==\"change\" and (.on==\"server\" or (.on==\"${if microphone then "source" else "sink"}\" and .index==$default_index))" <<< "$EVENT"); then
+          if $(jq '.on=="server"' <<< "$EVENT"); then
+            set_default
+          fi
+          get_status
         fi
-        get_status
-      fi
-    done
-  '';
-
-  listen_volume = pkgs.writeShellScript "eww_listen_volume" ''
-    set_default_sink() {
-      default_sink="$(pactl get-default-sink)"
-      default_sink_index=$(pactl --format=json list sinks short | jq ".[] | select(.name==\"$default_sink\").index")
-    }
-
-    get_status() {
-      pactl --format=json list sinks | jq -c ".[] | select(.index==$default_sink_index) | {\"sink\": .name, \"description\": .description, \"muted\": .mute, \"level\": .volume[].value_percent | rtrimstr(\"%\") | tonumber}"
-    }
-
-    sleep 1
-    default_sink_index=""
-    while [[ -z "$default_sink_index" ]]; do
-      set_default_sink
-      sleep 0.05
-    done
-
-    get_status
-    pactl --format=json subscribe | while read -r EVENT; do
-      if $(jq ".event==\"change\" and (.on==\"server\" or (.on==\"sink\" and .index==$default_sink_index))" <<< "$EVENT"); then
-        if $(jq '.on=="server"' <<< "$EVENT"); then
-          set_default_sink
-        fi
-        get_status
-      fi
-    done
-  '';
+      done
+    '';
 
   listen_brightness = pkgs.writeShellScript "eww_listen_brightness" ''
     get-brightness
@@ -416,10 +389,10 @@ in {
           "${listen_workspaces}")
 
         (deflisten microphone :initial '{"source":"auto_null"}'
-          "${listen_microphone}")
+          "${listen_microphone_volume true}")
 
         (deflisten volume :initial '{"sink":"auto_null"}'
-          "${listen_volume}")
+          "${listen_microphone_volume false}")
 
         ${if config.hardware.brightness-controls.enable then ''
         (deflisten brightness :initial 0
